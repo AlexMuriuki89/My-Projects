@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+  <script src="api.js"></script>
+  <script>
+    console.log("Page loaded!");
+    loadDataFromBackend();
+  </script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pesapal Department Updates - September 2025</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        color: #1a202c;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .app-container {
+        display: flex;
+        height: 100vh;
+      }
+
+      .sidebar-nav {
+        width: 280px;
+        background: linear-gradient(
+          180deg,
+          #2c5aa0 0%,
+          #1e40af 50%,
+          #8b1538 100%
+        );
+        color: white;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+      }
+
+      .sidebar-nav::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M 8 0 L 0 0 0 8" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        opacity: 0.4;
+      }
+
+      .sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        z-index: 1;
+      }
+
+      .sidebar-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      .pesapal-logo-sidebar {
+        height: 32px;
+        background: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .sidebar-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+      }
+
+      .sidebar-subtitle {
+        font-size: 0.85rem;
+        opacity: 0.8;
+      }
+
+      .department-list {
+        flex: 1;
+        padding: 1rem 0;
+        position: relative;
+        z-index: 1;
+        overflow-y: auto;
+      }
+
+      .department-item {
+        margin: 0.25rem 1rem;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 500;
+        position: relative;
+      }
+
+      .department-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateX(4px);
+      }
+
+      .department-item.active {
+        background: rgba(255, 255, 255, 0.15);
+        border-left: 3px solid #fbbf24;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .department-item.active::before {
+        content: "";
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 6px;
+        height: 6px;
+        background: #fbbf24;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+
+      .department-icon {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+      }
+
+      .department-info {
+        flex: 1;
+      }
+
+      .department-name {
+        font-size: 0.9rem;
+        margin-bottom: 0.1rem;
+      }
+
+      .department-count {
+        font-size: 0.7rem;
+        opacity: 0.7;
+      }
+
+      .add-department {
+        margin: 1rem;
+        padding: 0.75rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px dashed rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 500;
+      }
+
+      .add-department:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.5);
+      }
+
+      .sidebar-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        z-index: 1;
+      }
+
+      .date-info {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        text-align: center;
+      }
+
+      .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        background: #f8fafc;
+      }
+
+      .content-header {
+        background: white;
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .current-department {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .department-icon-large {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #2c5aa0, #8b1538);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        box-shadow: 0 4px 12px rgba(44, 90, 160, 0.3);
+      }
+
+      .department-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+      }
+
+      .department-description {
+        color: #64748b;
+        font-size: 0.9rem;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 0.75rem;
+      }
+
+      .action-btn {
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        color: #64748b;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.85rem;
+      }
+
+      .action-btn:hover {
+        border-color: #2c5aa0;
+        color: #2c5aa0;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(44, 90, 160, 0.2);
+      }
+
+      .action-btn.primary {
+        background: linear-gradient(135deg, #2c5aa0, #8b1538);
+        color: white;
+        border-color: transparent;
+      }
+
+      .action-btn.primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(44, 90, 160, 0.3);
+      }
+
+      .category-filter {
+        padding: 1rem 2rem;
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+      }
+
+      .filter-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e2e8f0;
+        background: white;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+        color: #64748b;
+      }
+
+      .filter-btn:hover {
+        border-color: #2c5aa0;
+        color: #2c5aa0;
+      }
+
+      .filter-btn.active {
+        background: #2c5aa0;
+        color: white;
+        border-color: #2c5aa0;
+      }
+
+      .department-content {
+        flex: 1;
+        padding: 2rem;
+        overflow-y: auto;
+        min-height: 0;
+      }
+
+      .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--accent-color);
+      }
+
+      .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--accent-color);
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-label {
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 0.5px;
+      }
+
+      .stat-card.critical {
+        --accent-color: #dc2626;
+      }
+      .stat-card.open-float {
+        --accent-color: #2563eb;
+      }
+      .stat-card.merchant-credit {
+        --accent-color: #16a34a;
+      }
+      .stat-card.pfms {
+        --accent-color: #ca8a04;
+      }
+      .stat-card.drive {
+        --accent-color: #7c3aed;
+      }
+      .stat-card.summary {
+        --accent-color: #ea580c;
+      }
+
+      .tasks-container {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+      }
+
+      .tasks-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f1f5f9;
+      }
+
+      .tasks-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+      }
+
+      .task-item {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .task-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        background: white;
+      }
+
+      .task-item::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--category-color);
+        border-radius: 0 4px 4px 0;
+      }
+
+      .task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+      }
+
+      .task-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+        flex: 1;
+      }
+
+      .task-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-left: 1rem;
+      }
+
+      .task-action-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+      }
+
+      .edit-btn {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .edit-btn:hover {
+        background: #bfdbfe;
+      }
+
+      .delete-btn {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+
+      .delete-btn:hover {
+        background: #fecaca;
+      }
+
+      .task-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .task-badges {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .task-status,
+      .task-category {
+        padding: 0.3rem 0.7rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .task-category {
+        background: var(--category-bg);
+        color: var(--category-text);
+      }
+
+      .task-deadline {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 600;
+      }
+
+      .task-deadline.overdue {
+        color: #dc2626;
+        font-weight: 700;
+      }
+
+      .task-deadline.due-soon {
+        color: #f59e0b;
+        font-weight: 700;
+      }
+
+      .task-description {
+        color: #64748b;
+        line-height: 1.6;
+        font-size: 0.9rem;
+      }
+
+      .task-item.critical {
+        --category-color: #dc2626;
+        --category-bg: #fee2e2;
+        --category-text: #991b1b;
+      }
+
+      .task-item.open-float {
+        --category-color: #2563eb;
+        --category-bg: #dbeafe;
+        --category-text: #1d4ed8;
+      }
+
+      .task-item.merchant-credit {
+        --category-color: #16a34a;
+        --category-bg: #dcfce7;
+        --category-text: #15803d;
+      }
+
+      .task-item.pfms {
+        --category-color: #ca8a04;
+        --category-bg: #fef3c7;
+        --category-text: #a16207;
+      }
+
+      .task-item.drive {
+        --category-color: #7c3aed;
+        --category-bg: #ede9fe;
+        --category-text: #6d28d9;
+      }
+
+      .task-item.summary {
+        --category-color: #ea580c;
+        --category-bg: #fed7aa;
+        --category-text: #c2410c;
+      }
+
+      .task-status.completed {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      .task-status.ongoing {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .task-status.pending {
+        background: #fce7f3;
+        color: #831843;
+      }
+
+      .task-status.overdue {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      }
+
+      .modal-overlay.active {
+        display: flex;
+      }
+
+      .modal-overlay.active .modal {
+        transform: scale(1);
+      }
+
+      .modal-header {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      .form-label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+      }
+
+      .form-input,
+      .form-select,
+      .form-textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+        font-family: inherit;
+      }
+
+      .form-textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+
+      .form-input:focus,
+      .form-select:focus,
+      .form-textarea:focus {
+        outline: none;
+        border-color: #2c5aa0;
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+      }
+
+      .btn-cancel {
+        padding: 0.75rem 1.5rem;
+        background: #f1f5f9;
+        color: #64748b;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-cancel:hover {
+        background: #e2e8f0;
+      }
+
+      .btn-primary {
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #2c5aa0, #8b1538);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(44, 90, 160, 0.3);
+      }
+
+      .btn-danger {
+        padding: 0.75rem 1.5rem;
+        background: #dc2626;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-danger:hover {
+        background: #b91c1c;
+        transform: translateY(-1px);
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .sidebar-nav {
+          width: 240px;
+        }
+
+        .department-content {
+          padding: 1rem;
+        }
+
+        .stats-overview {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .content-header {
+          padding: 1rem;
+          flex-direction: column;
+          gap: 1rem;
+          text-align: center;
+        }
+
+        .task-header {
+          flex-direction: column;
+          gap: 0.5rem;
+          align-items: flex-start;
+        }
+
+        .task-actions {
+          margin-left: 0;
+        }
+
+        .modal {
+          margin: 1rem;
+          width: calc(100% - 2rem);
+        }
+
+        .category-filter {
+          padding: 1rem;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .sidebar-nav {
+          position: fixed;
+          left: -280px;
+          transition: left 0.3s ease;
+          z-index: 200;
+        }
+
+        .sidebar-nav.mobile-open {
+          left: 0;
+        }
+
+        .mobile-overlay {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 150;
+        }
+
+        .mobile-overlay.active {
+          display: block;
+        }
+
+        .main-content {
+          width: 100%;
+        }
+
+        .stats-overview {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <nav class="sidebar-nav">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">
+            <div>
+              <div class="sidebar-title">Pesapal</div>
+              <div class="sidebar-subtitle">Department Updates</div>
+            </div>
+          </div>
+
+          <button class="add-department" onclick="showAddDepartmentModal()">
+            + Add Department
+          </button>
+        </div>
+
+        <ul class="department-list" id="departmentList">
+          <div class="department-item active" data-dept="tech">
+            <div class="department-icon">TT</div>
+            <div class="department-info">
+              <div class="department-name">Tech Team</div>
+              <div class="department-count">15 active tasks</div>
+            </div>
+          </div>
+
+          <div class="department-item" data-dept="sales">
+            <div class="department-icon">SM</div>
+            <div class="department-info">
+              <div class="department-name">Sales & Marketing</div>
+              <div class="department-count">8 active tasks</div>
+            </div>
+          </div>
+
+          <div class="department-item" data-dept="operations">
+            <div class="department-icon">OP</div>
+            <div class="department-info">
+              <div class="department-name">Operations</div>
+              <div class="department-count">12 active tasks</div>
+            </div>
+          </div>
+
+          <div class="department-item" data-dept="finance">
+            <div class="department-icon">FD</div>
+            <div class="department-info">
+              <div class="department-name">Finance</div>
+              <div class="department-count">9 active tasks</div>
+            </div>
+          </div>
+
+          <div class="department-item" data-dept="hr">
+            <div class="department-icon">HD</div>
+            <div class="department-info">
+              <div class="department-name">Human Resources</div>
+              <div class="department-count">6 active tasks</div>
+            </div>
+          </div>
+        </ul>
+
+        <div class="sidebar-footer">
+          <div class="date-info">Last updated: October 2, 2025</div>
+        </div>
+      </nav>
+
+      <div class="mobile-overlay" onclick="closeMobileSidebar()"></div>
+
+      <main class="main-content">
+        <div class="content-header">
+          <div class="current-department">
+            <div class="department-icon-large" id="currentDepartmentIcon"></div>
+            <div>
+              <div class="department-title" id="currentDepartmentTitle">
+                Tech Team
+              </div>
+              <div
+                class="department-description"
+                id="currentDepartmentDescription"
+              >
+                Project Status & Development Progress
+              </div>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <button class="action-btn primary" onclick="showAddTaskModal()">
+              + Add Task
+            </button>
+          </div>
+        </div>
+
+        <div class="category-filter">
+          <button class="filter-btn active" data-category="all">
+            All Tasks
+          </button>
+          <button class="filter-btn" data-category="critical">Critical</button>
+          <button class="filter-btn" data-category="open-float">
+            Open Float
+          </button>
+          <button class="filter-btn" data-category="merchant-credit">
+            Merchant Credit
+          </button>
+          <button class="filter-btn" data-category="pfms">PFMS</button>
+          <button class="filter-btn" data-category="drive">Drive</button>
+        </div>
+
+        <div class="department-content" id="departmentContent"></div>
+      </main>
+    </div>
+
+    <div class="modal-overlay" id="addDepartmentModal">
+      <div class="modal">
+        <div class="modal-header">Add Department</div>
+        <form id="departmentForm" onsubmit="submitDepartment(event)">
+          <div class="form-group">
+            <label class="form-label" for="deptName">Department Name:</label>
+            <input class="form-input" type="text" id="deptName" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="deptIcon">Icon:</label>
+            <input
+              class="form-input"
+              type="text"
+              id="deptIcon"
+              placeholder=""
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="deptDescription">Description:</label>
+            <input
+              class="form-input"
+              type="text"
+              id="deptDescription"
+              required
+            />
+          </div>
+          <div class="form-actions">
+            <button
+              type="button"
+              class="btn-cancel"
+              onclick="hideAddDepartmentModal()"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">Save Department</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="taskModal">
+      <div class="modal">
+        <div class="modal-header" id="taskModalTitle">Add Task</div>
+        <form id="taskForm" onsubmit="submitTask(event)">
+          <div class="form-group">
+            <label class="form-label" for="taskTitle">Task Title:</label>
+            <input class="form-input" type="text" id="taskTitle" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="taskDescription">Description:</label>
+            <textarea
+              class="form-textarea"
+              id="taskDescription"
+              required
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="taskCategory">Category:</label>
+            <select class="form-select" id="taskCategory" required>
+              <option value="critical">Critical</option>
+              <option value="open-float">Open Float</option>
+              <option value="merchant-credit">Merchant Credit</option>
+              <option value="pfms">PFMS</option>
+              <option value="drive">Drive</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="taskStatus">Status:</label>
+            <select class="form-select" id="taskStatus" required>
+              <option value="pending">Pending</option>
+              <option value="ongoing">Ongoing</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="taskDeadline">Deadline:</label>
+            <input
+              class="form-input"
+              type="datetime-local"
+              id="taskDeadline"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="taskPriority">Priority:</label>
+            <select class="form-select" id="taskPriority" required>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" onclick="hideTaskModal()">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" id="taskSubmitBtn">
+              Save Task
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="deleteModal">
+      <div class="modal">
+        <div class="modal-header">Confirm Deletion</div>
+        <p>
+          Are you sure you want to delete this task? This action cannot be
+          undone.
+        </p>
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" onclick="hideDeleteModal()">
+            Cancel
+          </button>
+          <button type="button" class="btn-danger" onclick="confirmDelete()">
+            Delete Task
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let taskIdCounter = 1000;
+      let activeFilter = "all";
+
+      const categories = {
+        critical: { name: "Critical", color: "#dc2626" },
+        "open-float": { name: "Open Float", color: "#2563eb" },
+        "merchant-credit": { name: "Merchant Credit", color: "#16a34a" },
+        pfms: { name: "PFMS", color: "#ca8a04" },
+        drive: { name: "Drive", color: "#7c3aed" },
+      };
+
+      const departmentData = {
+        tech: {
+          title: "Tech Team",
+          icon: "TT",
+          description: "Project Status & Development Progress",
+          tasks: [
+            {
+              id: ++taskIdCounter,
+              title: "Payment Gateway Critical Issue",
+              status: "ongoing",
+              category: "critical",
+              description:
+                "Urgent fix required for payment processing failures affecting 15% of transactions. Customer complaints increasing.",
+              deadline: "2025-09-25T18:00",
+              priority: "high",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "Float Balance Monitoring",
+              status: "ongoing",
+              category: "open-float",
+              description:
+                "Implement real-time monitoring system for merchant float balances to prevent overdrafts.",
+              deadline: "2025-10-05T16:00",
+              priority: "high",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "Credit Limit Algorithm",
+              status: "pending",
+              category: "merchant-credit",
+              description:
+                "Develop automated credit scoring system for merchant credit limit assignments based on transaction history.",
+              deadline: "2025-10-20T17:00",
+              priority: "medium",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "PFMS Integration Testing",
+              status: "ongoing",
+              category: "pfms",
+              description:
+                "Complete integration testing with Public Financial Management System for government payment processing.",
+              deadline: "2025-10-10T15:00",
+              priority: "high",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "Drive API Enhancement",
+              status: "completed",
+              category: "drive",
+              description:
+                "Enhanced Drive payment solution API with improved error handling and response times.",
+              deadline: "2025-09-15T12:00",
+              priority: "medium",
+            },
+          ],
+        },
+        sales: {
+          title: "Sales & Marketing",
+          icon: "SM",
+          description: "Customer Acquisition & Market Expansion",
+          tasks: [
+            {
+              id: ++taskIdCounter,
+              title: "Critical Client Retention",
+              status: "ongoing",
+              category: "critical",
+              description:
+                "Address concerns from top 3 enterprise clients threatening to leave due to service issues.",
+              deadline: "2025-09-26T16:00",
+              priority: "high",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "Merchant Float Campaign",
+              status: "pending",
+              category: "open-float",
+              description:
+                "Launch marketing campaign to educate merchants about float management best practices.",
+              deadline: "2025-10-15T14:00",
+              priority: "medium",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "Credit Product Launch",
+              status: "ongoing",
+              category: "merchant-credit",
+              description:
+                "Market launch preparation for new merchant credit facilities and promotional materials.",
+              deadline: "2025-11-01T12:00",
+              priority: "high",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "Government Sales Strategy",
+              status: "pending",
+              category: "pfms",
+              description:
+                "Develop sales approach for government agencies using PFMS integration capabilities.",
+              deadline: "2025-10-25T16:00",
+              priority: "medium",
+            },
+          ],
+        },
+        operations: {
+          title: "Operations",
+          icon: "OP",
+          description: "Process Optimization & Service Delivery",
+          tasks: [
+            {
+              id: ++taskIdCounter,
+              title: "System Outage Recovery",
+              status: "completed",
+              category: "critical",
+              description:
+                "Successfully recovered from 2-hour system outage on Sept 20th. Post-incident analysis completed.",
+              deadline: "2025-09-22T09:00",
+              priority: "high",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "Float Reconciliation Process",
+              status: "ongoing",
+              category: "open-float",
+              description:
+                "Streamline daily float reconciliation process to reduce processing time from 4 hours to 1 hour.",
+              deadline: "2025-10-08T17:00",
+              priority: "medium",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "Credit Risk Assessment",
+              status: "ongoing",
+              category: "merchant-credit",
+              description:
+                "Review and update credit risk assessment procedures based on recent defaults analysis.",
+              deadline: "2025-10-18T16:00",
+              priority: "high",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "PFMS Compliance Audit",
+              status: "pending",
+              category: "pfms",
+              description:
+                "Conduct compliance audit for PFMS integration to ensure regulatory requirements are met.",
+              deadline: "2025-11-05T15:00",
+              priority: "medium",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "Drive Support Training",
+              status: "completed",
+              category: "drive",
+              description:
+                "Completed training for support team on new Drive payment solution troubleshooting procedures.",
+              deadline: "2025-09-18T14:00",
+              priority: "low",
+            },
+          ],
+        },
+        finance: {
+          title: "Finance",
+          icon: "FD",
+          description: "Financial Planning & Analysis",
+          tasks: [
+            {
+              id: ++taskIdCounter,
+              title: "Cash Flow Emergency Plan",
+              status: "ongoing",
+              category: "critical",
+              description:
+                "Develop emergency cash flow management plan due to unexpected large withdrawals.",
+              deadline: "2025-09-24T12:00",
+              priority: "high",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "Float Reserve Analysis",
+              status: "ongoing",
+              category: "open-float",
+              description:
+                "Analyze optimal float reserve levels across different merchant segments to minimize risk.",
+              deadline: "2025-10-12T16:00",
+              priority: "high",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "Credit Portfolio Review",
+              status: "pending",
+              category: "merchant-credit",
+              description:
+                "Quarterly review of merchant credit portfolio performance and risk exposure.",
+              deadline: "2025-10-30T17:00",
+              priority: "medium",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "PFMS Financial Controls",
+              status: "ongoing",
+              category: "pfms",
+              description:
+                "Implement additional financial controls for government payment processing via PFMS.",
+              deadline: "2025-10-15T15:00",
+              priority: "high",
+            },
+          ],
+        },
+        hr: {
+          title: "Human Resources",
+          icon: "HD",
+          description: "Talent Management & Employee Experience",
+          tasks: [
+            {
+              id: ++taskIdCounter,
+              title: "Critical Skills Gap Analysis",
+              status: "ongoing",
+              category: "critical",
+              description:
+                "Urgent analysis of critical skills gaps in technical team affecting project delivery.",
+              deadline: "2025-09-27T16:00",
+              priority: "high",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "Drive Team Expansion",
+              status: "pending",
+              category: "drive",
+              description:
+                "Recruit additional team members for Drive payment solution support and development.",
+              deadline: "2025-11-15T17:00",
+              priority: "medium",
+            },
+            {
+              id: ++taskIdCounter,
+              title: "PFMS Training Program",
+              status: "ongoing",
+              category: "pfms",
+              description:
+                "Develop comprehensive training program for staff on PFMS integration processes.",
+              deadline: "2025-10-20T14:00",
+              priority: "medium",
+            },
+          ],
+        },
+      };
+
+      let currentDepartment = "tech";
+      let editingTaskId = null;
+      let deleteTaskId = null;
+
+      function init() {
+        loadDepartmentContent(currentDepartment);
+        setupEventListeners();
+        updateTaskCounts();
+      }
+
+      function setupEventListeners() {
+        document.querySelectorAll(".department-item").forEach((item) => {
+          item.addEventListener("click", function () {
+            const deptId = this.getAttribute("data-dept");
+            if (deptId && departmentData[deptId]) {
+              switchDepartment(deptId);
+            }
+          });
+        });
+
+        document.querySelectorAll(".filter-btn").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const category = this.getAttribute("data-category");
+            setActiveFilter(category);
+          });
+        });
+
+        document.addEventListener("click", function (e) {
+          if (e.target.classList.contains("modal-overlay")) {
+            hideAllModals();
+          }
+        });
+      }
+
+      function setActiveFilter(category) {
+        activeFilter = category;
+
+        document.querySelectorAll(".filter-btn").forEach((btn) => {
+          btn.classList.remove("active");
+          if (btn.getAttribute("data-category") === category) {
+            btn.classList.add("active");
+          }
+        });
+
+        loadDepartmentContent(currentDepartment);
+      }
+
+      function filterTasks(tasks) {
+        if (activeFilter === "all") {
+          return tasks;
+        }
+        return tasks.filter((task) => task.category === activeFilter);
+      }
+
+      function calculateCategoryStats(tasks) {
+        const stats = {};
+        Object.keys(categories).forEach((cat) => {
+          stats[cat] = 0;
+        });
+
+        tasks.forEach((task) => {
+          if (stats.hasOwnProperty(task.category)) {
+            stats[task.category]++;
+          }
+        });
+
+        return stats;
+      }
+
+      function updateTaskCounts() {
+        Object.keys(departmentData).forEach((deptId) => {
+          const dept = departmentData[deptId];
+          const count = dept.tasks.length;
+          updateSidebarCount(deptId, count);
+        });
+      }
+
+      function getDeadlineStatus(deadline, status) {
+        if (status === "completed") return "";
+
+        const now = new Date();
+        const deadlineDate = new Date(deadline);
+        const timeDiff = deadlineDate - now;
+        const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+        if (timeDiff < 0) return "overdue";
+        if (daysDiff <= 3) return "due-soon";
+        return "";
+      }
+
+      function formatDeadline(deadline) {
+        const date = new Date(deadline);
+        const now = new Date();
+        const timeDiff = date - now;
+        const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+        const formatted = date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        if (timeDiff < 0) {
+          return `${formatted} (${Math.abs(daysDiff)} days overdue)`;
+        } else if (daysDiff === 0) {
+          return `${formatted} (Due today)`;
+        } else if (daysDiff === 1) {
+          return `${formatted} (Due tomorrow)`;
+        } else if (daysDiff <= 7) {
+          return `${formatted} (Due in ${daysDiff} days)`;
+        }
+
+        return formatted;
+      }
+
+      function switchDepartment(deptId) {
+        currentDepartment = deptId;
+        activeFilter = "all";
+
+        document.querySelectorAll(".department-item").forEach((item) => {
+          item.classList.remove("active");
+        });
+        document
+          .querySelector(`[data-dept="${deptId}"]`)
+          .classList.add("active");
+
+        document.querySelectorAll(".filter-btn").forEach((btn) => {
+          btn.classList.remove("active");
+          if (btn.getAttribute("data-category") === "all") {
+            btn.classList.add("active");
+          }
+        });
+
+        loadDepartmentContent(deptId);
+
+        closeMobileSidebar();
+      }
+
+      function loadDepartmentContent(deptId) {
+        const dept = departmentData[deptId];
+        if (!dept) return;
+
+        const allTasks = dept.tasks;
+        const filteredTasks = filterTasks(allTasks);
+        const categoryStats = calculateCategoryStats(allTasks);
+
+        document.getElementById("currentDepartmentIcon").textContent =
+          dept.icon;
+        document.getElementById("currentDepartmentTitle").textContent =
+          dept.title;
+        document.getElementById("currentDepartmentDescription").textContent =
+          dept.description;
+
+        const contentHTML = `
+                <div class="stats-overview">
+                    ${Object.entries(categoryStats)
+                      .map(
+                        ([category, count]) => `
+                        <div class="stat-card ${category}">
+                            <div class="stat-number">${count}</div>
+                            <div class="stat-label">${categories[category].name}</div>
+                        </div>
+                    `
+                      )
+                      .join("")}
+                </div>
+                
+                <div class="tasks-container">
+                    <div class="tasks-header">
+                        <div class="tasks-title">
+                            ${
+                              activeFilter === "all"
+                                ? "All Tasks"
+                                : categories[activeFilter].name + " Tasks"
+                            }
+                            <span style="color: #64748b; font-size: 1rem; font-weight: 400;">(${
+                              filteredTasks.length
+                            })</span>
+                        </div>
+                    </div>
+                    <div class="tasks-list">
+                        ${
+                          filteredTasks.length === 0
+                            ? '<div style="text-align: center; color: #64748b; padding: 3rem;">No tasks found in this category.</div>'
+                            : filteredTasks
+                                .map((task) => {
+                                  const deadlineStatus = getDeadlineStatus(
+                                    task.deadline,
+                                    task.status
+                                  );
+                                  const taskStatus =
+                                    deadlineStatus === "overdue"
+                                      ? "overdue"
+                                      : task.status;
+                                  return `
+                                    <div class="task-item ${
+                                      task.category
+                                    }" data-task-id="${task.id}">
+                                        <div class="task-header">
+                                            <div class="task-title">${
+                                              task.title
+                                            }</div>
+                                            <div class="task-actions">
+                                                <button class="task-action-btn edit-btn" onclick="editTask(${
+                                                  task.id
+                                                })">Edit</button>
+                                                <button class="task-action-btn delete-btn" onclick="showDeleteConfirm(${
+                                                  task.id
+                                                })">Delete</button>
+                                            </div>
+                                        </div>
+                                        <div class="task-meta">
+                                            <div class="task-badges">
+                                                <div class="task-status ${taskStatus}">${taskStatus}</div>
+                                                <div class="task-category">${
+                                                  categories[task.category].name
+                                                }</div>
+                                            </div>
+                                            <div class="task-deadline ${deadlineStatus}">
+                                                📅 ${formatDeadline(
+                                                  task.deadline
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div class="task-description">${
+                                          task.description
+                                        }</div>
+                                    </div>
+                                `;
+                                })
+                                .join("")
+                        }
+                    </div>
+                </div>
+            `;
+
+        document.getElementById("departmentContent").innerHTML = contentHTML;
+
+        animateStatNumbers();
+      }
+
+      function updateSidebarCount(deptId, count) {
+        const deptElement = document.querySelector(
+          `[data-dept="${deptId}"] .department-count`
+        );
+        if (deptElement) {
+          deptElement.textContent = `${count} active tasks`;
+        }
+      }
+
+      function animateStatNumbers() {
+        document.querySelectorAll(".stat-number").forEach((stat) => {
+          const finalValue = parseInt(stat.textContent);
+          let currentValue = 0;
+          const increment = Math.max(1, Math.ceil(finalValue / 15));
+
+          stat.textContent = "0";
+
+          const counter = setInterval(() => {
+            currentValue += increment;
+            if (currentValue >= finalValue) {
+              stat.textContent = finalValue;
+              clearInterval(counter);
+            } else {
+              stat.textContent = currentValue;
+            }
+          }, 40);
+        });
+      }
+
+      function showAddTaskModal() {
+        editingTaskId = null;
+        document.getElementById("taskModalTitle").textContent = "Add Task";
+        document.getElementById("taskSubmitBtn").textContent = "Save Task";
+
+        document.getElementById("taskForm").reset();
+
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        nextWeek.setHours(17, 0);
+        document.getElementById("taskDeadline").value = nextWeek
+          .toISOString()
+          .slice(0, 16);
+
+        document.getElementById("taskModal").classList.add("active");
+      }
+
+      function editTask(taskId) {
+        const dept = departmentData[currentDepartment];
+        const task = dept.tasks.find((t) => t.id === taskId);
+        if (!task) return;
+
+        editingTaskId = taskId;
+        document.getElementById("taskModalTitle").textContent = "Edit Task";
+        document.getElementById("taskSubmitBtn").textContent = "Update Task";
+
+        document.getElementById("taskTitle").value = task.title;
+        document.getElementById("taskDescription").value = task.description;
+        document.getElementById("taskCategory").value = task.category;
+        document.getElementById("taskStatus").value = task.status;
+        document.getElementById("taskDeadline").value = task.deadline;
+        document.getElementById("taskPriority").value = task.priority;
+
+        document.getElementById("taskModal").classList.add("active");
+      }
+
+      function submitTask(event) {
+        event.preventDefault();
+
+        const taskData = {
+          title: document.getElementById("taskTitle").value,
+          description: document.getElementById("taskDescription").value,
+          category: document.getElementById("taskCategory").value,
+          status: document.getElementById("taskStatus").value,
+          deadline: document.getElementById("taskDeadline").value,
+          priority: document.getElementById("taskPriority").value,
+        };
+
+        const dept = departmentData[currentDepartment];
+
+        if (editingTaskId) {
+          const taskIndex = dept.tasks.findIndex((t) => t.id === editingTaskId);
+          if (taskIndex !== -1) {
+            dept.tasks[taskIndex] = { ...dept.tasks[taskIndex], ...taskData };
+          }
+        } else {
+          const newTask = {
+            id: ++taskIdCounter,
+            ...taskData,
+          };
+          dept.tasks.push(newTask);
+        }
+
+        loadDepartmentContent(currentDepartment);
+        updateTaskCounts();
+
+        hideTaskModal();
+      }
+
+      function showDeleteConfirm(taskId) {
+        deleteTaskId = taskId;
+        document.getElementById("deleteModal").classList.add("active");
+      }
+
+      function confirmDelete() {
+        if (!deleteTaskId) return;
+
+        const dept = departmentData[currentDepartment];
+        const taskIndex = dept.tasks.findIndex((t) => t.id === deleteTaskId);
+
+        if (taskIndex !== -1) {
+          dept.tasks.splice(taskIndex, 1);
+          loadDepartmentContent(currentDepartment);
+          updateTaskCounts();
+        }
+
+        hideDeleteModal();
+      }
+
+      function hideTaskModal() {
+        document.getElementById("taskModal").classList.remove("active");
+        editingTaskId = null;
+      }
+
+      function hideDeleteModal() {
+        document.getElementById("deleteModal").classList.remove("active");
+        deleteTaskId = null;
+      }
+
+      function hideAllModals() {
+        document.querySelectorAll(".modal-overlay").forEach((modal) => {
+          modal.classList.remove("active");
+        });
+        editingTaskId = null;
+        deleteTaskId = null;
+      }
+
+      function showAddDepartmentModal() {
+        document.getElementById("addDepartmentModal").classList.add("active");
+      }
+
+      function hideAddDepartmentModal() {
+        document
+          .getElementById("addDepartmentModal")
+          .classList.remove("active");
+        document.getElementById("departmentForm").reset();
+      }
+
+      function submitDepartment(event) {
+        event.preventDefault();
+
+        const name = document.getElementById("deptName").value;
+        const icon = document.getElementById("deptIcon").value;
+        const description = document.getElementById("deptDescription").value;
+
+        const deptId = name
+          .toLowerCase()
+          .replace(/\s+/g, "")
+          .replace(/[^a-z0-9]/g, "");
+
+        departmentData[deptId] = {
+          title: name,
+          icon: icon,
+          description: description,
+          tasks: [],
+        };
+
+        const departmentList = document.getElementById("departmentList");
+        const newDepartmentHTML = `
+                <div class="department-item" data-dept="${deptId}">
+                    <div class="department-icon">${icon}</div>
+                    <div class="department-info">
+                        <div class="department-name">${name}</div>
+                        <div class="department-count">0 active tasks</div>
+                    </div>
+                </div>
+            `;
+
+        departmentList.insertAdjacentHTML("beforeend", newDepartmentHTML);
+
+        const newDeptElement = departmentList.lastElementChild;
+        newDeptElement.addEventListener("click", function () {
+          switchDepartment(deptId);
+        });
+
+        switchDepartment(deptId);
+
+        hideAddDepartmentModal();
+      }
+
+      function toggleMobileSidebar() {
+        const sidebar = document.querySelector(".sidebar-nav");
+        const overlay = document.querySelector(".mobile-overlay");
+
+        sidebar.classList.toggle("mobile-open");
+        overlay.classList.toggle("active");
+      }
+
+      function closeMobileSidebar() {
+        const sidebar = document.querySelector(".sidebar-nav");
+        const overlay = document.querySelector(".mobile-overlay");
+
+        sidebar.classList.remove("mobile-open");
+        overlay.classList.remove("active");
+      }
+
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>

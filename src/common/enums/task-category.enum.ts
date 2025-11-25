@@ -1,0 +1,8 @@
+export enum TaskCategory {
+  CRITICAL = 'CRITICAL',
+  OPEN_FLOAT = 'OPEN_FLOAT',
+  MERCHANT_CREDIT = 'MERCHANT_CREDIT',
+  PFMS = 'PFMS',
+  DRIVE = 'DRIVE',
+  SUMMARY = 'SUMMARY',
+}
