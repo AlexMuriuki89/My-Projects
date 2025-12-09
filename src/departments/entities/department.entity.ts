@@ -1,18 +1,10 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-} from 'typeorm';
-import { Task } from '../../tasks/entities/task.entity';
+// src/departments/entities/department.entity.ts
+import { Entity, Column, OneToMany } from 'typeorm';
+import { Project } from '../../projects/entities/project.entity';
+import { BaseEntity } from '../../common/entities/base.entity';
 
 @Entity('departments')
-export class Department {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class Department extends BaseEntity {
   @Column({ unique: true })
   name: string;
 
@@ -25,12 +17,6 @@ export class Department {
   @Column({ unique: true })
   slug: string;
 
-  @OneToMany(() => Task, (task) => task.department, { cascade: true })
-  tasks: Task[];
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @OneToMany(() => Project, (project) => project.department, { cascade: true })
+  projects: Project[];
 }

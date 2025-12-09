@@ -1,30 +1,50 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+// src/tasks/tasks.service.ts
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { TaskStatus } from '../common/enums/task-status.enum';
+import { TaskStatus } from './entities/task.entity';
 
 @Injectable()
 export class TasksService {
+  private readonly logger = new Logger(TasksService.name);
+
   constructor(
     @InjectRepository(Task)
     private tasksRepository: Repository<Task>,
   ) {}
 
-  // Get all tasks
-  findAll() {
-    return this.tasksRepository.find({
-      relations: ['department'],
+  async findAll(): Promise<Task[]> {
+    return await this.tasksRepository.find({
+      where: { isDeleted: false } as any,
+      relations: ['project', 'project.department'],
+      order: { createdAt: 'DESC' } as any,
     });
   }
 
-  // Get task by ID
-  async findOne(id: string) {
+  async findAllWithDeleted(): Promise<Task[]> {
+    return await this.tasksRepository.find({
+      relations: ['project', 'project.department'],
+      order: { createdAt: 'DESC' } as any,
+    });
+  }
+
+  async findDeletedTasks(): Promise<Task[]> {
+    return await this.tasksRepository.find({
+      where: { isDeleted: true } as any,
+      relations: ['project', 'project.department'],
+      order: { createdAt: 'DESC' } as any,
+    });
+  }
+
+  async findOne(id: number): Promise<Task> {
     const task = await this.tasksRepository.findOne({
-      where: { id },
-      relations: ['department'],
+      where: { id, isDeleted: false } as any,
+      relations: ['project', 'project.department'],
     });
 
     if (!task) {
@@ -34,38 +54,88 @@ export class TasksService {
     return task;
   }
 
-  // Create new task
-  create(createTaskDto: CreateTaskDto) {
+  async create(createTaskDto: CreateTaskDto): Promise<Task> {
     const task = this.tasksRepository.create(createTaskDto);
-    return this.tasksRepository.save(task);
+    return await this.tasksRepository.save(task);
   }
 
-  // Update task
-  async update(id: string, updateTaskDto: UpdateTaskDto) {
+  async update(id: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
     const task = await this.findOne(id);
     Object.assign(task, updateTaskDto);
-    return this.tasksRepository.save(task);
+    return await this.tasksRepository.save(task);
   }
 
-  // Delete task
-  async remove(id: string) {
-    const task = await this.findOne(id);
-    return this.tasksRepository.remove(task);
+  async softDelete(id: number): Promise<void> {
+    const task = await this.tasksRepository.findOne({
+      where: { id } as any,
+    });
+
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${id} not found`);
+    }
+
+    (task as any).isDeleted = true;
+    await this.tasksRepository.save(task);
+    this.logger.log(`Task with ID ${id} has been soft deleted`);
   }
 
-  // Get tasks by department
-  findByDepartment(departmentId: string) {
-    return this.tasksRepository.find({
-      where: { departmentId },
-      relations: ['department'],
+  async restore(id: number): Promise<void> {
+    const task = await this.tasksRepository.findOne({
+      where: { id, isDeleted: true } as any,
+    });
+
+    if (!task) {
+      throw new NotFoundException(
+        `Task with ID ${id} not found or not deleted`,
+      );
+    }
+
+    (task as any).isDeleted = false;
+    await this.tasksRepository.save(task);
+    this.logger.log(`Task with ID ${id} has been restored`);
+  }
+
+  async remove(id: number): Promise<void> {
+    await this.softDelete(id);
+  }
+
+  async hardDelete(id: number): Promise<void> {
+    const task = await this.tasksRepository.findOne({
+      where: { id } as any,
+    });
+
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${id} not found`);
+    }
+
+    await this.tasksRepository.remove(task);
+    this.logger.log(`Task with ID ${id} has been permanently deleted`);
+  }
+
+  async findByProject(projectId: number): Promise<Task[]> {
+    return await this.tasksRepository.find({
+      where: { projectId, isDeleted: false } as any,
+      relations: ['project'],
+      order: { createdAt: 'DESC' } as any,
     });
   }
 
-  // Get tasks by status
-  findByStatus(status: TaskStatus) {
-    return this.tasksRepository.find({
-      where: { status },
-      relations: ['department'],
+  async findByDepartment(departmentId: number): Promise<Task[]> {
+    return await this.tasksRepository
+      .createQueryBuilder('task')
+      .leftJoinAndSelect('task.project', 'project')
+      .leftJoinAndSelect('project.department', 'department')
+      .where('project.departmentId = :departmentId', { departmentId })
+      .andWhere('task.isDeleted = :isDeleted', { isDeleted: false })
+      .orderBy('task.createdAt', 'DESC')
+      .getMany();
+  }
+
+  async findByStatus(status: TaskStatus): Promise<Task[]> {
+    return await this.tasksRepository.find({
+      where: { status, isDeleted: false } as any,
+      relations: ['project', 'project.department'],
+      order: { createdAt: 'DESC' } as any,
     });
   }
 }

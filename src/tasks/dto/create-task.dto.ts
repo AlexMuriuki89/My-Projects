@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsEnum, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TaskStatus } from '../../common/enums/task-status.enum';
 import { TaskCategory } from '../../common/enums/task-category.enum';
@@ -57,11 +63,10 @@ export class CreateTaskDto {
   deadline?: Date;
 
   @ApiProperty({
-    description: 'UUID of the department this task belongs to',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-    format: 'uuid',
+    description: 'ID of the project this task belongs to',
+    example: 1,
   })
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  departmentId: string;
+  projectId: number;
 }
